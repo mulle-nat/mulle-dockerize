@@ -19,30 +19,29 @@ build_image()
 
    local sharedir
 
-   sharedir="${prefix}/share/mulle-dockerize/${name}"
-   cd "${sharedir}" || exit 1
+   (
+      sharedir="${prefix}/share/mulle-dockerize/${name}"
+      cd "${sharedir}" || exit 1
 
-   local userid
-   local groupid
-   local groupname
+      local userid
+      local groupid
+      local groupname
 
-   # https://stackoverflow.com/questions/4598001/how-do-you-find-the-original-user-through-multiple-sudo-and-su-commands
-   userid="`id -u "${me}" `"
-   groupid="`id -g "${me}" `"
-   groupname="`get_group_by_id "${groupid}"`"
+      # https://stackoverflow.com/questions/4598001/how-do-you-find-the-original-user-through-multiple-sudo-and-su-commands
+      userid="`id -u "${me}" `"
+      groupid="`id -g "${me}" `"
+      groupname="`get_group_by_id "${groupid}"`"
 
-   [ -z "${groupname}" ] && echo "Couldn't figure out groupname, will use docker" >&2
+      [ -z "${groupname}" ] && echo "Couldn't figure out groupname, will use docker" >&2
 
-   if ! "${DOCKER}" build  \
-               --build-arg "USERNAME=${me}"  \
-               --build-arg "USERID=${userid}" \
-               --build-arg "GROUPID=${groupid}" \
-               --build-arg "GROUPNAME=${groupname}" \
-               -t "${imagename}" \
-               .
-   then
-      exit 1
-   fi
+      "${DOCKER}" build  \
+                  --build-arg "USERNAME=${me}"  \
+                  --build-arg "USERID=${userid}" \
+                  --build-arg "GROUPID=${groupid}" \
+                  --build-arg "GROUPNAME=${groupname}" \
+                  -t "${imagename}" \
+                  .
+   ) || exit $?
 }
 
 

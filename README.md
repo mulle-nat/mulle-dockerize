@@ -19,6 +19,11 @@ install -D npm/Dockerfile "${PREFIX}/share/mulle-dockerize/npm/Dockerfile"
 install -D yo/Dockerfile "${PREFIX}/share/mulle-dockerize/yo/Dockerfile"
 ln -s -f "${PREFIX}/bin/mulle-dockerize" "${PREFIX}/bin/npm"
 ln -s -f "${PREFIX}/bin/mulle-dockerize" "${PREFIX}/bin/yo"
+```
+
+Maybe add this to your `.bash_profile`:
+
+```
 alias yo="yo --no-insight"
 ```
 

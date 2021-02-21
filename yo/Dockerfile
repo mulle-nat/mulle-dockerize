@@ -17,6 +17,12 @@ RUN groupadd -g "${GROUPID:-1000}" ${GROUPNAME:-docker} \
 
 RUN chown -R "${USERNAME:-docker}:${GROUPNAME:-docker}" /usr/local
 
+# up till here we can reuse npm
+#
+# yo specifica
+#
+RUN apt-get -y -q install git webpack
+
 RUN su "${USERNAME:-docker}" -l -c "npm install -g yo generator-code"
 
 USER ${USERNAME:-docker}
