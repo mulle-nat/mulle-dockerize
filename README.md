@@ -3,8 +3,8 @@
 #### 🔌 Visual Studio Code Extension Environment
 
 
-Supplies a dockerized "yo" and a dockerized "npm" command. The docker images
-will be built the first time the commands are executed.
+Supplies dockerized "yo", "npm", "vsce" commands. The docker image for the
+command will be built the first time a command is executed.
 
 > Because of unix group/user permissions, the dockerized commands will only
 > work for the installing user. So everything will be installed local to the
