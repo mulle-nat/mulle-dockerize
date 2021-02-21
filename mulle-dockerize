@@ -5,8 +5,14 @@ DOCKER="${DOCKER:-docker}"
 get_group_by_id()
 {
    local gid="$1"
+   local me="$2"
 
-   getent group | sed -n -e "/:${gid}:"'/s/^\([A-Za-z0-9_-]*\).*/\1/p'
+   if [ ! -z "`command -v getent`" ] 
+   then
+      getent group | sed -n -e "/:${gid}:"'/s/^\([A-Za-z0-9_-]*\).*/\1/p'
+   else
+      id -ng "$me"
+   fi
 }
 
 
@@ -30,7 +36,7 @@ build_image()
       # https://stackoverflow.com/questions/4598001/how-do-you-find-the-original-user-through-multiple-sudo-and-su-commands
       userid="`id -u "${me}" `"
       groupid="`id -g "${me}" `"
-      groupname="`get_group_by_id "${groupid}"`"
+      groupname="`get_group_by_id "${groupid}" "${me}" `"
 
       [ -z "${groupname}" ] && echo "Couldn't figure out groupname, will use docker" >&2
 

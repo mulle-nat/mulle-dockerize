@@ -2,10 +2,16 @@
 
 PREFIX="${1:-${HOME:-~}}"
 
-install -v -D npm/Dockerfile "${PREFIX}/share/mulle-dockerize/npm/Dockerfile"
-install -v -D yo/Dockerfile "${PREFIX}/share/mulle-dockerize/yo/Dockerfile"
-install -v -D vsce/Dockerfile "${PREFIX}/share/mulle-dockerize/vsce/Dockerfile"
-install -v -D mulle-dockerize "${PREFIX}/bin/mulle-dockerize"
+# macOS install is gimped
+mkdir -p "${PREFIX}/share/mulle-dockerize/npm"
+mkdir -p "${PREFIX}/share/mulle-dockerize/yo"
+mkdir -p "${PREFIX}/share/mulle-dockerize/vsce"
+mkdir -p "${PREFIX}/bin"
+
+install -v npm/Dockerfile "${PREFIX}/share/mulle-dockerize/npm/Dockerfile"
+install -v yo/Dockerfile "${PREFIX}/share/mulle-dockerize/yo/Dockerfile"
+install -v vsce/Dockerfile "${PREFIX}/share/mulle-dockerize/vsce/Dockerfile"
+install -v mulle-dockerize "${PREFIX}/bin/mulle-dockerize"
 ln -v -s -f "${PREFIX}/bin/mulle-dockerize" "${PREFIX}/bin/npm"
 ln -v -s -f "${PREFIX}/bin/mulle-dockerize" "${PREFIX}/bin/yo"
 ln -v -s -f "${PREFIX}/bin/mulle-dockerize" "${PREFIX}/bin/vsce"
