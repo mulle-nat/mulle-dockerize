@@ -19,7 +19,17 @@ RUN chown -R "${USERNAME:-docker}:${GROUPNAME:-docker}" /usr/local
 
 # -----------------
 
+# up till here we can reuse npm
+#
+# vsce specifica
+#
+# run as root
+#RUN apt-get -y -q install git webpack
+
+# run as docker user
 USER ${USERNAME:-docker}
+RUN npm install -g vsce
+
 #
 # Uncomment this and comment out the next three lines to have an
 # interactive shell
@@ -27,5 +37,5 @@ USER ${USERNAME:-docker}
 # WORKDIR [ "/home/${USERNAME:-docker}" ]
 
 WORKDIR "/mnt/host"
-ENTRYPOINT [ "/bin/npm" ]
-CMD [ "--help" ]
+ENTRYPOINT [ "/usr/local/bin/vsce" ]
+CMD [ "help" ]

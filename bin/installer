@@ -1,9 +1,12 @@
 #! /bin/sh
 
-PREFIX="${HOME:-~}"
-install -v -D mulle-dockerize "${PREFIX}/bin/mulle-dockerize"
+PREFIX="${1:-${HOME:-~}}"
+
 install -v -D npm/Dockerfile "${PREFIX}/share/mulle-dockerize/npm/Dockerfile"
 install -v -D yo/Dockerfile "${PREFIX}/share/mulle-dockerize/yo/Dockerfile"
+install -v -D vsce/Dockerfile "${PREFIX}/share/mulle-dockerize/vsce/Dockerfile"
+install -v -D mulle-dockerize "${PREFIX}/bin/mulle-dockerize"
 ln -v -s -f "${PREFIX}/bin/mulle-dockerize" "${PREFIX}/bin/npm"
 ln -v -s -f "${PREFIX}/bin/mulle-dockerize" "${PREFIX}/bin/yo"
+ln -v -s -f "${PREFIX}/bin/mulle-dockerize" "${PREFIX}/bin/vsce"
 
