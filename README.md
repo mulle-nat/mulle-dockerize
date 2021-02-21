@@ -1,12 +1,36 @@
-# VSEE
+# mulle-dockerize
 
-#### 🔌 Visual Studio Extension Environment
+#### 🔌 Visual Studio Code Extension Environment
 
-Creates a dockerized "yo" command with `sudo ./build-yo-code-docker-image` in
-a docker image named "yo-code".
 
-Then create a "yo" alias with
-`alias yo='sudo docker run -i -t -v "${PWD}:/mnt/host" yo --no-insight"` and
-now you can run `yo code`.
+Supplies a dockerized "yo" and a dockerized "npm" command. The docker images
+will be built the first time the commands are executed.
 
-That's it.
+> Because of unix group/user permissions, the dockerized commands will only
+> work for the installing user. So everything will be installed local to the
+> users home.
+
+## Install
+
+```
+PREFIX="${HOME}"
+install -D mulle-dockerize "${PREFIX}/bin/mulle-dockerize"
+install -D npm/Dockerfile "${PREFIX}/share/mulle-dockerize/npm/Dockerfile"
+install -D yo/Dockerfile "${PREFIX}/share/mulle-dockerize/yo/Dockerfile"
+ln -s -f "${PREFIX}/bin/mulle-dockerize" "${PREFIX}/bin/npm"
+ln -s -f "${PREFIX}/bin/mulle-dockerize" "${PREFIX}/bin/yo"
+alias yo="yo --no-insight"
+```
+
+### Ubuntu
+
+Don't mess around, put your user in the "docker" group and don't `sudo`
+all the time.
+
+[How can I use docker without sudo?](https://askubuntu.com/questions/477551/how-can-i-use-docker-without-sudo)
+
+```
+sudo groupadd docker
+sudo gpasswd -a $USER docker
+newgrp docker
+```

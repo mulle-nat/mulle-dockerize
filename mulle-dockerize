@@ -1,0 +1,66 @@
+#! /bin/sh
+
+DOCKER="${DOCKER:-docker}"
+
+get_group_by_id()
+{
+   local gid="$1"
+
+   getent group | sed -n -e "/:${gid}:"'/s/^\([A-Za-z0-9_-]*\).*/\1/p'
+}
+
+
+build_image()
+{
+   local me="${1:-unknown}"
+   local name="${2:-unknown}"
+   local imagename="${3:-unknown-unknown}"
+   local prefix="${4:-~}"
+
+   local sharedir
+
+   sharedir="${prefix}/share/mulle-dockerize/${name}"
+   cd "${sharedir}" || exit 1
+
+   local userid
+   local groupid
+   local groupname
+
+   # https://stackoverflow.com/questions/4598001/how-do-you-find-the-original-user-through-multiple-sudo-and-su-commands
+   userid="`id -u "${me}" `"
+   groupid="`id -g "${me}" `"
+   groupname="`get_group_by_id "${groupid}"`"
+
+   [ -z "${groupname}" ] && echo "Couldn't figure out groupname, will use docker" >&2
+
+   if ! "${DOCKER}" build  \
+               --build-arg "USERNAME=${me}"  \
+               --build-arg "USERID=${userid}" \
+               --build-arg "GROUPID=${groupid}" \
+               --build-arg "GROUPNAME=${groupname}" \
+               -t "${imagename}" \
+               .
+   then
+      exit 1
+   fi
+}
+
+
+name="`basename -- "$0"`"
+prefix="`dirname -- "$0" `"
+prefix="`dirname -- "${prefix}" `"
+
+me="`logname`"
+imagename="${me}-${name}"
+
+if ! dockerid="`"${DOCKER}" images -q "${imagename}"`"
+then
+   exit 1
+fi
+
+if [ -z "${dockerid}" ]
+then
+   build_image "${me}" "${name}" "${imagename}" "${prefix}"
+fi
+
+exec "${DOCKER}" run -i -t -v "${PWD}:/mnt/host" "${imagename}" "$@"
