@@ -1,5 +1,7 @@
 #! /bin/sh
 
+MULLE_DOCKERIZE_VERSION=0.0.1
+
 DOCKER="${DOCKER:-docker}"
 
 get_group_by_id()
