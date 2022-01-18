@@ -40,13 +40,13 @@ build_image()
 
       [ -z "${groupname}" ] && echo "Couldn't figure out groupname, will use docker" >&2
 
-      "${DOCKER}" build  \
-                  --build-arg "USERNAME=${me}"  \
-                  --build-arg "USERID=${userid}" \
-                  --build-arg "GROUPID=${groupid}" \
-                  --build-arg "GROUPNAME=${groupname}" \
-                  -t "${imagename}" \
-                  .
+      ${SUDO} "${DOCKER}" build  \
+                          --build-arg "USERNAME=${me}"  \
+                          --build-arg "USERID=${userid}" \
+                          --build-arg "GROUPID=${groupid}" \
+                          --build-arg "GROUPNAME=${groupname}" \
+                          -t "${imagename}" \
+                          .
    ) || exit $?
 }
 
@@ -58,7 +58,7 @@ prefix="`dirname -- "${prefix}" `"
 me="`logname`"
 imagename="${me}-${name}"
 
-if ! dockerid="`"${DOCKER}" images -q "${imagename}"`"
+if ! dockerid="`${SUDO} "${DOCKER}" images -q "${imagename}"`"
 then
    exit 1
 fi
@@ -68,4 +68,4 @@ then
    build_image "${me}" "${name}" "${imagename}" "${prefix}"
 fi
 
-exec "${DOCKER}" run -i -t -v "${PWD}:/mnt/host" "${imagename}" "$@"
+exec ${SUDO} "${DOCKER}" run -i -t -v "${PWD}:/mnt/host" "${imagename}" "$@"

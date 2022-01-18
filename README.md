@@ -16,13 +16,19 @@ Run `./bin/installer` or
 
 ```
 PREFIX="${HOME}"
-install -D npm/Dockerfile "${PREFIX}/share/mulle-dockerize/npm/Dockerfile"
-install -D yo/Dockerfile "${PREFIX}/share/mulle-dockerize/yo/Dockerfile"
-install -D vsce/Dockerfile "${PREFIX}/share/mulle-dockerize/vsce/Dockerfile"
-install -D mulle-dockerize "${PREFIX}/bin/mulle-dockerize"
-ln -s -f "${PREFIX}/bin/mulle-dockerize" "${PREFIX}/bin/npm"
-ln -s -f "${PREFIX}/bin/mulle-dockerize" "${PREFIX}/bin/yo"
-ln -s -f "${PREFIX}/bin/mulle-dockerize" "${PREFIX}/bin/vsce"
+
+mkdir -p "${PREFIX}/share/mulle-dockerize/npm"
+mkdir -p "${PREFIX}/share/mulle-dockerize/yo"
+mkdir -p "${PREFIX}/share/mulle-dockerize/vsce"
+mkdir -p "${PREFIX}/bin"
+
+install -v npm/Dockerfile "${PREFIX}/share/mulle-dockerize/npm/Dockerfile"
+install -v yo/Dockerfile "${PREFIX}/share/mulle-dockerize/yo/Dockerfile"
+install -v vsce/Dockerfile "${PREFIX}/share/mulle-dockerize/vsce/Dockerfile"
+install -v mulle-dockerize "${PREFIX}/bin/mulle-dockerize"
+ln -v -s -f "${PREFIX}/bin/mulle-dockerize" "${PREFIX}/bin/npm"
+ln -v -s -f "${PREFIX}/bin/mulle-dockerize" "${PREFIX}/bin/yo"
+ln -v -s -f "${PREFIX}/bin/mulle-dockerize" "${PREFIX}/bin/vsce"
 ```
 
 Maybe add this to your `.bash_profile`:

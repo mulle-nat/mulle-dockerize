@@ -1,9 +1,6 @@
-FROM ubuntu:latest
+FROM node
 
 ARG DEBIAN_FRONTEND=noninteractive
-
-RUN apt-get update \
-    && apt-get -y -q install sudo nodejs npm
 
 ARG USERID
 ARG GROUPNAME
