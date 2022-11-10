@@ -1,64 +1,87 @@
 #! /bin/sh
-
+#
+# shellcheck disable=SC2236 # ! -z
+# shellcheck disable=SC2006
+#
+# This script creates a docker for the given command. You
+# don't invoke it directly, instead you use a symlink to
+# mulle-dockerize to run a command.
+#
+# see https://github.com/mulle-nat/mulle-dockerize for
+# more info
+#
 MULLE_DOCKERIZE_VERSION=0.0.1
 
 DOCKER="${DOCKER:-docker}"
 
 get_group_by_id()
 {
-   local gid="$1"
-   local me="$2"
+   gg_gid="$1"
+   gg_me="$2"
 
    if [ ! -z "`command -v getent`" ] 
    then
-      getent group | sed -n -e "/:${gid}:"'/s/^\([A-Za-z0-9_-]*\).*/\1/p'
+      getent group | sed -n -e "/:${gg_gid}:"'/s/^\([A-Za-z0-9_-]*\).*/\1/p'
    else
-      id -ng "$me"
+      id -ng "${gg_me}"
    fi
 }
 
 
 build_image()
 {
-   local me="${1:-unknown}"
-   local name="${2:-unknown}"
-   local imagename="${3:-unknown-unknown}"
-   local prefix="${4:-~}"
+   bi_me="${1:-unknown}"
+   bi_name="${2:-unknown}"
+   bi_imagename="${3:-unknown-unknown}"
+   bi_prefix="${4:-~}"
 
-   local sharedir
+   # local sharedir
 
    (
-      sharedir="${prefix}/share/mulle-dockerize/${name}"
-      cd "${sharedir}" || exit 1
+      bi_sharedir="${bi_prefix}/share/mulle-dockerize/${bi_name}"
+      cd "${bi_sharedir}" || exit 1
 
-      local userid
-      local groupid
-      local groupname
+      # local userid
+      # local groupid
+      # local groupname
 
       # https://stackoverflow.com/questions/4598001/how-do-you-find-the-original-user-through-multiple-sudo-and-su-commands
-      userid="`id -u "${me}" `"
-      groupid="`id -g "${me}" `"
-      groupname="`get_group_by_id "${groupid}" "${me}" `"
+      bi_userid="`id -u "${bi_me}" `"
+      bi_groupid="`id -g "${bi_me}" `"
+      bi_groupname="`get_group_by_id "${bi_groupid}" "${bi_me}" `"
 
-      [ -z "${groupname}" ] && echo "Couldn't figure out groupname, will use docker" >&2
+      [ -z "${bi_groupname}" ] && echo "Couldn't figure out groupname, will use docker" >&2
 
       ${SUDO} "${DOCKER}" build  \
-                          --build-arg "USERNAME=${me}"  \
-                          --build-arg "USERID=${userid}" \
-                          --build-arg "GROUPID=${groupid}" \
-                          --build-arg "GROUPNAME=${groupname}" \
-                          -t "${imagename}" \
+                          --build-arg "USERNAME=${bi_me}"  \
+                          --build-arg "USERID=${bi_userid}" \
+                          --build-arg "GROUPID=${bi_groupid}" \
+                          --build-arg "GROUPNAME=${bi_groupname}" \
+                          -t "${bi_imagename}" \
                           .
    ) || exit $?
 }
 
 
 name="`basename -- "$0"`"
+dockername="${name}"
+
+actual="`readlink "$0"`"
+
+if [ ! -z "${actual}" ]
+then
+   dockername="`basename -- "$actual"`"
+   if [ "${dockername}" = "mulle-dockerize" ]
+   then
+      dockername="${name}"
+   fi
+fi
+
 prefix="`dirname -- "$0" `"
 prefix="`dirname -- "${prefix}" `"
 
 me="`logname`"
-imagename="${me}-${name}"
+imagename="${me}-${dockername}"
 
 if ! dockerid="`${SUDO} "${DOCKER}" images -q "${imagename}"`"
 then
@@ -67,7 +90,15 @@ fi
 
 if [ -z "${dockerid}" ]
 then
-   build_image "${me}" "${name}" "${imagename}" "${prefix}"
+   build_image "${me}" "${dockername}" "${imagename}" "${prefix}"
 fi
 
-exec ${SUDO} "${DOCKER}" run -i -t -v "${PWD}:/mnt/host" "${imagename}" "$@"
+exec ${SUDO} "${DOCKER}" \
+       ${DOCKERFLAGS} \
+   run ${DOCKERRUNFLAGS} \
+       -i \
+       -t \
+       -v "${PWD}:/mnt/host" \
+       --entrypoint "/bin/${name}" \
+       "${imagename}" \
+       "$@"
