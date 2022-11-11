@@ -1,0 +1,25 @@
+#! /usr/bin/env mulle-bash
+# shellcheck shell=bash
+
+[ -x "mulle-dockerize" ] || fail "must be in mulle-dockerize home"
+
+PREFIX=~
+
+.foreachline file in `find . -maxdepth 1 -executable -type f`
+.do
+   r_basename "${file}"
+   file="${RVAL}"
+
+   log_info "${file}"
+   diff "${file}" "${PREFIX}/bin/${file}"
+.done
+
+
+.foreachline directory in `find "${PREFIX}/share/mulle-dockerize" -mindepth 1 -maxdepth 1 -type d`
+.do
+   r_basename "${directory}"
+   name="${RVAL}"
+
+   log_info "share/${name}"
+   diff "share/${name}" "${directory}"
+.done

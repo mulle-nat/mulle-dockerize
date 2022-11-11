@@ -1,0 +1,20 @@
+#!/bin/sh
+
+case " $* " in
+   *\ serve\ *)
+      if [ -f _config.yml ]
+      then
+         url="`sed -n 's/^baseurl:[ "]*\([^" ]*\).*/\1/p' _config.yml`"
+         sedcommand="s|http://0.0.0.0:4000${url}/|http://127.0.0.1${url}/index.html|"
+      fi
+   ;;
+esac
+
+# can also run bundle or bundler I suppose with this, if you symlink to
+# this script
+
+cmd="`r_basename -- "$0" `"
+
+MULLE_DOCKERNAME="jekyll" \
+DOCKERRUNFLAGS="-i -t --rm --publish 127.0.0.1:80:4000/tcp" \
+   mulle-dockerize "${cmd}" "$@" | sed -e "${sedcommand}"

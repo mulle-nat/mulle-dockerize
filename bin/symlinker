@@ -1,0 +1,69 @@
+#! /bin/sh
+#
+# The symlinker keeps the files in the mulle-dockerize project directory
+# and only creates symlinks in ~/bin and ~/share. The major advantage of this
+# is for development, where you don't want to have multiple different copies
+# (see also: diff-installed, in case you use the default installer)
+#
+PREFIX="${1:-${HOME:-~}}"
+
+if [ ! -x "mulle-dockerize" -o ! -d "share/node" ]
+then
+   echo "must be run in mulle-dockerize project directory" >&2
+   exit 1
+fi
+
+
+r_relative_path_between()
+{
+    RVAL=''
+    [ $# -ge 1 ] && [ $# -le 2 ] || return 1
+
+    current="${2:+"$1"}"
+    target="${2:-"$1"}"
+
+    [ "$target" != . ] || target=/
+
+    target="/${target##/}"
+    [ "$current" != . ] || current=/
+
+    current="${current:="/"}"
+    current="/${current##/}"
+    appendix="${target##/}"
+    relative=''
+
+    while appendix="${target#"$current"/}"
+        [ "$current" != '/' ] && [ "$appendix" = "$target" ]; do
+        if [ "$current" = "$appendix" ]; then
+            relative="${relative:-.}"
+            RVAL="${relative#/}"
+            return 0
+        fi
+        current="${current%/*}"
+        relative="$relative${relative:+/}.."
+    done
+
+    RVAL="$relative${relative:+${appendix:+/}}${appendix#/}"
+}
+
+
+r_relative_path_between "${PREFIX}/share/mulle-dockerize" "${PWD}/share"
+
+mkdir -p "${PREFIX}/share/mulle-dockerize"
+
+ln -v -s -f "${RVAL}/jekyll"             "${PREFIX}/share/mulle-dockerize/jekyll"
+ln -v -s -f "${RVAL}/node"               "${PREFIX}/share/mulle-dockerize/node"
+ln -v -s -f "${RVAL}/npm"                "${PREFIX}/share/mulle-dockerize/npm"
+ln -v -s -f "${RVAL}/yo"                 "${PREFIX}/share/mulle-dockerize/yo"
+ln -v -s -f "${RVAL}/vsce"               "${PREFIX}/share/mulle-dockerize/vsce"
+
+r_relative_path_between "${PREFIX}/bin"  "${PWD}"
+mkdir -p "${PREFIX}/bin"
+
+ln -v -s -f "${RVAL}/mulle-dockerize"    "${PREFIX}/bin/mulle-dockerize"
+ln -v -s -f "${RVAL}/jekyll"             "${PREFIX}/bin/jekyll"
+
+ln -v -s -f "${RVAL}/mulle-dockerize"    "${PREFIX}/bin/node"
+ln -v -s -f "${RVAL}/mulle-dockerize"    "${PREFIX}/bin/npm"
+ln -v -s -f "${RVAL}/mulle-dockerize"    "${PREFIX}/bin/yo"
+ln -v -s -f "${RVAL}/mulle-dockerize"    "${PREFIX}/bin/vsce"

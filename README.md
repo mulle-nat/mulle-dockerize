@@ -1,47 +1,28 @@
 # mulle-dockerize
 
-#### 🔌 JavaScript Dockerized Commands
+#### 🔌 Collection of Dockerized Commands
 
-Don't want to mess up your system with `npm` and its ilk ? No problem run
-them in a docker.
+Don't want to mess up your system with `npm` or `jekyll` and its ilk ? No
+problem run them in a docker.
 
-
-Supplies dockerized "yo", "node", "npm", "vsce" commands. The docker image for
-the command will be built the first time a command is executed.
+This project supplies dockerized "yo", "node", "npm", "vsce" and "jekyll"
+commands. The docker image for the command will be built the first time a
+command is executed. The produced files will have the permissions of the logged
+in user and not some pseudo docker user or even ... root.
 
 > Because of unix group/user permissions, the dockerized commands will only
-> work for the installing user. So everything will be installed local to the
+> work for the installing user. So everything shouldl be installed local to the
 > users home.
 
-#### node container
 
-Setup for electron apps. You probably need to set `xhost +local:root` and then
-invoke your app with (following [this example](https://medium.com/ingeniouslysimple/building-an-electron-app-from-scratch-part-1-a1d9012c146a)):
+### Bonus Action in 0.2.0
 
-``` sh
-ELECTRONFLAGS="${ELECTRONFLAGS:--no-sandbox}"
+So you know, that a mulle-dockerized container already contains the command,
+that you want to dockerize ? No need to create a new container! Just symlink
+to the symlink.
 
-DOCKERRUNFLAGS="${DOCKERRUNFLAGS} \
---security-opt apparmor=unconfined \
---env DBUS_SESSION_BUS_ADDRESS \
---env=DISPLAY \
---env=QT_X11_NO_MITSHM=1 \
---volume /sys/fs/cgroup:/sys/fs/cgroup:ro \
---volume=/run/dbus:/run/dbus:rw \
---volume=/run/user:/run/user:rw \
---volume=/tmp/.X11-unix:/tmp/.X11-unix:rw" \
-   ./node_modules/.bin/electron ${ELECTRONFLAGS} ./src/electron/index.js "$@"
-```
-
-
-### Bonus Action in 0.1.0
-
-So you know you a mulle-dockerized container already contains the command, that
-you want to dockerize ? No need to create a new container! Just symlink to
-the symlink.
-
-In this example we just use `ls` from the ubuntu base package for demonstration
-purposes:
+In this example we just use `ls` from the ubuntu base package (which the node
+container is based on) for demonstration purposes:
 
 ```sh
 ln -s ~/bin/node ~/bin/ls
@@ -50,26 +31,63 @@ ln -s ~/bin/node ~/bin/ls
 
 ## Install
 
-Run `./bin/installer` or
+Run `./bin/installer` from the project root to install. For development
+purposes it's likely better to use `./bin/symlinker` to install. Or you can
+do it all manually:
+
+
+#### Jekyll
 
 ``` sh
-PREFIX="${HOME}"
+PREFIX="${HOME:-~}"
 
-mkdir -p "${PREFIX}/share/mulle-dockerize/npm"
-mkdir -p "${PREFIX}/share/mulle-dockerize/yo"
-mkdir -p "${PREFIX}/share/mulle-dockerize/vsce"
-mkdir -p "${PREFIX}/share/mulle-dockerize/node"
+mkdir   -p "${PREFIX}/bin"
+mkdir   -p "${PREFIX}/share/mulle-dockerize/jekyll"
+
+install -v share/jekyll/Dockerfile "${PREFIX}/share/mulle-dockerize/jekyll/Dockerfile"
+install -v share/jekyll/Gemfile    "${PREFIX}/share/mulle-dockerize/jekyll/Gemfile"
+
+install -v mulle-dockerize "${PREFIX}/bin/mulle-dockerize"
+install -v jekyll "${PREFIX}/bin/jekyll"
+```
+
+Now you can just say `jekyll serve -d /tmp/whatevs`. Note that your Gemfile
+will be ignored. For special needs edit `~/share/mulle-dockerize/jekyll/Gemfile`
+and let the container rebuild (see below for Tips and Tricks).
+
+
+#### Node and NPM
+
+``` sh
+PREFIX="${HOME:-~}"
+
 mkdir -p "${PREFIX}/bin"
+mkdir -p "${PREFIX}/share/mulle-dockerize/node"
+mkdir -p "${PREFIX}/share/mulle-dockerize/npm"
 
-install -v node/Dockerfile "${PREFIX}/share/mulle-dockerize/vsce/Dockerfile"
-install -v npm/Dockerfile "${PREFIX}/share/mulle-dockerize/npm/Dockerfile"
-install -v yo/Dockerfile "${PREFIX}/share/mulle-dockerize/yo/Dockerfile"
-install -v vsce/Dockerfile "${PREFIX}/share/mulle-dockerize/vsce/Dockerfile"
+install -v share/node/Dockerfile   "${PREFIX}/share/mulle-dockerize/node/Dockerfile"
+install -v share/npm/Dockerfile    "${PREFIX}/share/mulle-dockerize/npm/Dockerfile"
 
 install -v mulle-dockerize "${PREFIX}/bin/mulle-dockerize"
 
-ln -v -s -f "${PREFIX}/bin/mulle-dockerize" "${PREFIX}/bin/npm"
 ln -v -s -f "${PREFIX}/bin/mulle-dockerize" "${PREFIX}/bin/node"
+ln -v -s -f "${PREFIX}/bin/mulle-dockerize" "${PREFIX}/bin/npm"
+```
+
+### VSCE
+
+``` sh
+PREFIX="${HOME:-~}"
+
+mkdir -p "${PREFIX}/bin"
+mkdir -p "${PREFIX}/share/mulle-dockerize/yo"
+mkdir -p "${PREFIX}/share/mulle-dockerize/vsce"
+
+install -v share/yo/Dockerfile     "${PREFIX}/share/mulle-dockerize/yo/Dockerfile"
+install -v share/vsce/Dockerfile   "${PREFIX}/share/mulle-dockerize/vsce/Dockerfile"
+
+install -v mulle-dockerize "${PREFIX}/bin/mulle-dockerize"
+
 ln -v -s -f "${PREFIX}/bin/mulle-dockerize" "${PREFIX}/bin/yo"
 ln -v -s -f "${PREFIX}/bin/mulle-dockerize" "${PREFIX}/bin/vsce"
 ```
@@ -92,3 +110,44 @@ sudo groupadd docker
 sudo gpasswd -a $USER docker
 newgrp docker
 ```
+
+## Tips & Tricks
+
+#### Electron on Linux
+
+Setup for electron apps: You probably need to set `xhost +local:root` and then
+invoke your app with:
+
+``` sh
+ELECTRONFLAGS="${ELECTRONFLAGS:--no-sandbox}"
+
+DOCKERRUNFLAGS="${DOCKERRUNFLAGS} \
+--security-opt apparmor=unconfined \
+--env DBUS_SESSION_BUS_ADDRESS \
+--env=DISPLAY \
+--env=QT_X11_NO_MITSHM=1 \
+--volume /sys/fs/cgroup:/sys/fs/cgroup:ro \
+--volume=/run/dbus:/run/dbus:rw \
+--volume=/run/user:/run/user:rw \
+--volume=/tmp/.X11-unix:/tmp/.X11-unix:rw" \
+   ./node_modules/.bin/electron ${ELECTRONFLAGS} ./src/electron/index.js "$@"
+```
+
+This invocation follows [this example](https://medium.com/ingeniouslysimple/building-an-electron-app-from-scratch-part-1-a1d9012c146a)).
+
+#### Rebuild a command
+
+Get rid of a the docker containers for a certain image and the image itself:
+
+``` sh
+image="nat-node"
+docker rm $(docker ps -a -q --filter "ancestor=${image}")
+docker rmi "${image}"
+```
+
+Now just rerun the command and the container will be rebuilt.
+
+## Author
+
+[Nat!](//www.mulle-kybernetik.com/weblog) for
+[Mulle kybernetiK](//www.mulle-kybernetik.com)

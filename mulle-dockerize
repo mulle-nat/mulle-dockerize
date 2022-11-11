@@ -1,25 +1,55 @@
 #! /bin/sh
-#
-# shellcheck disable=SC2236 # ! -z
 # shellcheck disable=SC2006
+# shellcheck disable=SC2236
 #
-# This script creates a docker for the given command. You
-# don't invoke it directly, instead you use a symlink to
-# mulle-dockerize to run a command.
+#   Copyright (c) 2019-2022 Nat! - Mulle kybernetiK
+#   All rights reserved.
 #
-# see https://github.com/mulle-nat/mulle-dockerize for
-# more info
+#   Redistribution and use in source and binary forms, with or without
+#   modification, are permitted provided that the following conditions are met:
 #
-MULLE_DOCKERIZE_VERSION=0.0.1
+#   Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+#
+#   Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+#
+#   Neither the name of Mulle kybernetiK nor the names of its contributors
+#   may be used to endorse or promote products derived from this software
+#   without specific prior written permission.
+#
+#   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+#   AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+#   ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+#   LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+#   CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+#   SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+#   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+#   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+#   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#   POSSIBILITY OF SUCH DAMAGE.
+#
+[ "${TRACE}" = 'YES' -o "${MULLE_DOCKERIZE_TRACE}" = 'YES' ] && set -x && : "$0" "$@"
+
+
+MULLE_DOCKERIZE_VERSION=0.2.0
 
 DOCKER="${DOCKER:-docker}"
+DOCKERRUNFLAGS="${DOCKERRUNFLAGS:-"-i -t --rm"}"
+
+# MULLE_DOCKERNAME="${MULLE_DOCKERNAME}"
+MULLE_DOCKERIZE_MOUNT_POINT="${MULLE_DOCKERIZE_MOUNT_POINT:-/mnt/host}"
+MULLE_DOCKERIZE_ENTRY_POINT="${MULLE_DOCKERIZE_ENTRY_POINT:-""}"
+MULLE_DOCKERIZE_CLOBBER_ENTRY_POINT="${MULLE_DOCKERIZE_CLOBBER_ENTRY_POINT:-NO}"
 
 get_group_by_id()
 {
    gg_gid="$1"
    gg_me="$2"
 
-   if [ ! -z "`command -v getent`" ] 
+   if [ ! -z "`command -v getent`" ]
    then
       getent group | sed -n -e "/:${gg_gid}:"'/s/^\([A-Za-z0-9_-]*\).*/\1/p'
    else
@@ -63,22 +93,27 @@ build_image()
 }
 
 
-name="`basename -- "$0"`"
-dockername="${name}"
-
-actual="`readlink "$0"`"
-
-if [ ! -z "${actual}" ]
-then
-   dockername="`basename -- "$actual"`"
-   if [ "${dockername}" = "mulle-dockerize" ]
-   then
-      dockername="${name}"
-   fi
-fi
-
 prefix="`dirname -- "$0" `"
 prefix="`dirname -- "${prefix}" `"
+
+dockername="${MULLE_DOCKERNAME}"
+if [ -z "${dockername}" ]
+then
+   dockername="`basename -- "$0" `"
+   actual="`readlink "$0"`"
+
+   if [ ! -z "${actual}" ]
+   then
+      if [ "${dockername}" = "mulle-dockerize" ]
+      then
+         dockername="${MULLE_DOCKERNAME}"
+      else
+         dockername="`basename -- "${actual}" `"
+         MULLE_DOCKERIZE_CLOBBER_ENTRY_POINT='YES'
+         MULLE_DOCKERIZE_ENTRY_POINT="${MULLE_DOCKERNAME}"
+      fi
+   fi
+fi
 
 me="`logname`"
 imagename="${me}-${dockername}"
@@ -93,12 +128,19 @@ then
    build_image "${me}" "${dockername}" "${imagename}" "${prefix}"
 fi
 
-exec ${SUDO} "${DOCKER}" \
-       ${DOCKERFLAGS} \
-   run ${DOCKERRUNFLAGS} \
-       -i \
-       -t \
-       -v "${PWD}:/mnt/host" \
-       --entrypoint "/bin/${name}" \
-       "${imagename}" \
-       "$@"
+
+if [ "${MULLE_DOCKERIZE_CLOBBER_ENTRY_POINT}" = 'YES' ]
+then
+   exec ${SUDO} "${DOCKER}" ${DOCKERFLAGS} \
+         run ${DOCKERRUNFLAGS}  \
+            -v "${PWD}:${MULLE_DOCKERIZE_MOUNT_POINT}" \
+            --entry-point "${MULLE_DOCKERIZE_ENTRY_POINT}" \
+            "${imagename}" \
+            "$@"
+fi
+
+exec ${SUDO} "${DOCKER}" ${DOCKERFLAGS} \
+      run ${DOCKERRUNFLAGS} \
+         -v "${PWD}:${MULLE_DOCKERIZE_MOUNT_POINT}" \
+         "${imagename}" \
+         "$@"
