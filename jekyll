@@ -1,5 +1,8 @@
 #!/bin/sh
 
+[ "${TRACE}" = 'YES' -o "${MULLE_JEKYLL_TRACE}" = 'YES' ] && set -x && : "$0" "$@"
+
+
 case " $* " in
    *\ serve\ *)
       if [ -f _config.yml ]
@@ -13,8 +16,9 @@ esac
 # can also run bundle or bundler I suppose with this, if you symlink to
 # this script
 
-cmd="`r_basename -- "$0" `"
+cmd="`basename -- "$0" `"
 
 MULLE_DOCKERNAME="jekyll" \
+MULLE_DOCKERIZE_MOUNT_POINT="/srv/jekyll" \
 DOCKERRUNFLAGS="-i -t --rm --publish 127.0.0.1:80:4000/tcp" \
    mulle-dockerize "${cmd}" "$@" | sed -e "${sedcommand}"

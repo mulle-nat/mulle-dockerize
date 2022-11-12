@@ -51,9 +51,11 @@ install -v mulle-dockerize "${PREFIX}/bin/mulle-dockerize"
 install -v jekyll "${PREFIX}/bin/jekyll"
 ```
 
-Now you can just say `jekyll serve -d /tmp/whatevs`. Note that your Gemfile
-will be ignored. For special needs edit `~/share/mulle-dockerize/jekyll/Gemfile`
-and let the container rebuild (see below for Tips and Tricks).
+Now you can just say `jekyll serve -d /tmp/whatevs`. If you still get package
+retrieval, while starting the command, remove `Gemfile.lock` and rerun. If
+package retrieval persists, then copy your Gemfile to
+`~/share/mulle-dockerize/jekyll/Gemfile` and let the container be
+[rebuilt](#rebuild-a-command).
 
 
 #### Node and NPM
@@ -140,7 +142,7 @@ This invocation follows [this example](https://medium.com/ingeniouslysimple/buil
 Get rid of a the docker containers for a certain image and the image itself:
 
 ``` sh
-image="nat-node"
+image="${USERNAME}-jekyll"
 docker rm $(docker ps -a -q --filter "ancestor=${image}")
 docker rmi "${image}"
 ```
