@@ -135,7 +135,7 @@ DOCKERRUNFLAGS="${DOCKERRUNFLAGS} \
    ./node_modules/.bin/electron ${ELECTRONFLAGS} ./src/electron/index.js "$@"
 ```
 
-This invocation follows [this example](https://medium.com/ingeniouslysimple/building-an-electron-app-from-scratch-part-1-a1d9012c146a)).
+The invocation follows [this example](https://medium.com/ingeniouslysimple/building-an-electron-app-from-scratch-part-1-a1d9012c146a).
 
 #### Rebuild a command
 
