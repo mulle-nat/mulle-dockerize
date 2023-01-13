@@ -108,9 +108,9 @@ all the time.
 [How can I use docker without sudo?](https://askubuntu.com/questions/477551/how-can-i-use-docker-without-sudo)
 
 ``` sh
-sudo groupadd docker
-sudo gpasswd -a $USER docker
-newgrp docker
+sudo groupadd docker            # create "docker" group, if it doesn't exist
+sudo gpasswd -a $USER docker    # add current user to "docker" group
+newgrp docker                   # make change apparent in current shell
 ```
 
 ## Tips & Tricks

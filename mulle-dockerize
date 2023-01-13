@@ -34,15 +34,14 @@
 [ "${TRACE}" = 'YES' -o "${MULLE_DOCKERIZE_TRACE}" = 'YES' ] && set -x && : "$0" "$@"
 
 
-MULLE_DOCKERIZE_VERSION=0.2.0
+MULLE_DOCKERIZE_VERSION=0.3.0
 
 DOCKER="${DOCKER:-docker}"
 DOCKERRUNFLAGS="${DOCKERRUNFLAGS:-"-i -t --rm"}"
 
 # MULLE_DOCKERNAME="${MULLE_DOCKERNAME}"
 MULLE_DOCKERIZE_MOUNT_POINT="${MULLE_DOCKERIZE_MOUNT_POINT:-/mnt/host}"
-MULLE_DOCKERIZE_ENTRY_POINT="${MULLE_DOCKERIZE_ENTRY_POINT:-""}"
-MULLE_DOCKERIZE_CLOBBER_ENTRY_POINT="${MULLE_DOCKERIZE_CLOBBER_ENTRY_POINT:-NO}"
+MULLE_DOCKERIZE_CLOBBER_ENTRY_POINT="${MULLE_DOCKERIZE_CLOBBER_ENTRY_POINT:-${MULLE_DOCKERIZE_ENTRY_POINT:+YES}}"
 
 get_group_by_id()
 {
@@ -97,23 +96,44 @@ prefix="`dirname -- "$0" `"
 prefix="`dirname -- "${prefix}" `"
 
 dockername="${MULLE_DOCKERNAME}"
+
 if [ -z "${dockername}" ]
 then
-   dockername="`basename -- "$0" `"
+   executablename="`basename -- "$0" `"
+   dockername="${executablename}"
    actual="`readlink "$0"`"
 
    if [ ! -z "${actual}" ]
    then
-      if [ "${dockername}" = "mulle-dockerize" ]
+      actualexecutablename="`basename -- "${actual}" `"
+      if [ "${actualexecutablename}" != "mulle-dockerize" ]
       then
-         dockername="${MULLE_DOCKERNAME}"
-      else
-         dockername="`basename -- "${actual}" `"
          MULLE_DOCKERIZE_CLOBBER_ENTRY_POINT='YES'
-         MULLE_DOCKERIZE_ENTRY_POINT="${MULLE_DOCKERNAME}"
+         MULLE_DOCKERIZE_ENTRY_POINT="${MULLE_DOCKERIZE_ENTRY_POINT:-${dockername}}"
+         dockername="${actualexecutablename}"
       fi
    fi
 fi
+
+append_args_to_cmdline()
+{
+   for arg in "$@"
+   do
+      # True bourne sh doesn't know ${a//b/c} and <<<
+      case "${arg}" in
+         *\'*)
+            # Use cat instead of echo to avoid possible echo -n
+            # problems. Escape single quotes in string.
+            arg="`cat <<EOF | sed -e s/\'/\'\\\"\'\\\"\'/g
+${arg}
+EOF
+`"
+         ;;
+      esac
+      cmdline="${cmdline} '${arg}'"
+   done
+}
+
 
 me="`logname`"
 imagename="${me}-${dockername}"
@@ -128,19 +148,21 @@ then
    build_image "${me}" "${dockername}" "${imagename}" "${prefix}"
 fi
 
+#
+# build run command line
+#
+args="$@"
 
+set --
+set -- "$@" "${DOCKER}"  ${DOCKERFLAGS} run ${DOCKERRUNFLAGS}
+set -- "$@" -v "${PWD}:${MULLE_DOCKERIZE_MOUNT_POINT}"
+for arg in ${MULLE_DOCKERIZE_VOLUMES}
+do
+   set -- "$@" -v "${arg}"
+done
 if [ "${MULLE_DOCKERIZE_CLOBBER_ENTRY_POINT}" = 'YES' ]
 then
-   exec ${SUDO} "${DOCKER}" ${DOCKERFLAGS} \
-         run ${DOCKERRUNFLAGS}  \
-            -v "${PWD}:${MULLE_DOCKERIZE_MOUNT_POINT}" \
-            --entry-point "${MULLE_DOCKERIZE_ENTRY_POINT}" \
-            "${imagename}" \
-            "$@"
+   set -- "$@" --entrypoint "${MULLE_DOCKERIZE_ENTRY_POINT}"
 fi
 
-exec ${SUDO} "${DOCKER}" ${DOCKERFLAGS} \
-      run ${DOCKERRUNFLAGS} \
-         -v "${PWD}:${MULLE_DOCKERIZE_MOUNT_POINT}" \
-         "${imagename}" \
-         "$@"
+${SUDO} "$@" "${imagename}" ${args}
