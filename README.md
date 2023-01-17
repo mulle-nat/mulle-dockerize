@@ -21,8 +21,8 @@ So you know, that a mulle-dockerized container already contains the command,
 that you want to dockerize ? No need to create a new container! Just symlink
 to the symlink.
 
-In this example we just use `ls` from the ubuntu base package (which the node
-container is based on) for demonstration purposes:
+This example shows how to use `ls` from the ubuntu base package (which the *node*
+container is based on):
 
 ```sh
 ln -s ~/bin/node ~/bin/ls
