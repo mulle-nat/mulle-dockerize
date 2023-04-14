@@ -28,8 +28,11 @@ container is based on) for demonstration purposes:
 ln -s ~/bin/node ~/bin/ls
 ```
 
+> Using ls from the container may give a funny side effect, that it may run
+> under a different environment, and for example may produce '\r\n' instead of
+> `\n`!
 
-## Install
+ ## Install
 
 Run `./bin/installer` from the project root to install. For development
 purposes it's likely better to use `./bin/symlinker` to install. Or you can
@@ -139,15 +142,23 @@ The invocation follows [this example](https://medium.com/ingeniouslysimple/build
 
 #### Rebuild a command
 
-Get rid of a the docker containers for a certain image and the image itself:
+Get rid of a the docker containers for a certain command and to rebuild
+the image use `<command> --rebuild-docker-image`, e.g.
 
 ``` sh
-image="${USERNAME}-jekyll"
-docker rm $(docker ps -a -q --filter "ancestor=${image}")
-docker rmi "${image}"
+jekyll --rebuild-docker-image
 ```
 
-Now just rerun the command and the container will be rebuilt.
+
+> #### Alternative
+>
+> ``` sh
+> image="${USERNAME}-jekyll"
+> docker rm $(docker ps -a -q --filter "ancestor=${image}")
+> docker rmi "${image}"
+> ```
+>
+> Now just rerun the command and the container will be rebuilt.
 
 ## Author
 

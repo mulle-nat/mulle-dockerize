@@ -1,4 +1,4 @@
-FROM jekyll/jekyll:3.8
+FROM jekyll/jekyll:latest
 # latest was broken, so pick something known
 
 RUN apk add sudo || apk add doas-sudo-shim || :

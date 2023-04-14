@@ -34,7 +34,7 @@
 [ "${TRACE}" = 'YES' -o "${MULLE_DOCKERIZE_TRACE}" = 'YES' ] && set -x && : "$0" "$@"
 
 
-MULLE_DOCKERIZE_VERSION=0.3.0
+MULLE_DOCKERIZE_VERSION=0.3.1
 
 DOCKER="${DOCKER:-docker}"
 DOCKERRUNFLAGS="${DOCKERRUNFLAGS:-"-i -t --rm"}"
@@ -64,6 +64,8 @@ build_image()
    bi_imagename="${3:-unknown-unknown}"
    bi_prefix="${4:-~}"
 
+   shift 4
+
    # local sharedir
 
    (
@@ -87,6 +89,7 @@ build_image()
                           --build-arg "GROUPID=${bi_groupid}" \
                           --build-arg "GROUPNAME=${bi_groupname}" \
                           -t "${bi_imagename}" \
+                          "$@" \
                           .
    ) || exit $?
 }
@@ -138,15 +141,35 @@ EOF
 me="`logname`"
 imagename="${me}-${dockername}"
 
+rebuildflags=
+
+
+if [ $# -gt 1 ]
+then
+   case "$2" in
+      --rebuild-docker-image)
+         rebuildflags='--no-cache'
+
+         # splice out argument
+         arg1="$1"
+         shift
+         shift
+         set -- "${arg1}" "$@"
+      ;;
+   esac
+fi
+
+
 if ! dockerid="`${SUDO} "${DOCKER}" images -q "${imagename}"`"
 then
    exit 1
 fi
 
-if [ -z "${dockerid}" ]
+if [ -z "${dockerid}" -o ! -z "${rebuildflags}" ]
 then
-   build_image "${me}" "${dockername}" "${imagename}" "${prefix}"
+   build_image "${me}" "${dockername}" "${imagename}" "${prefix}" ${rebuildflags}
 fi
+
 
 #
 # build run command line
@@ -154,7 +177,7 @@ fi
 args="$@"
 
 set --
-set -- "$@" "${DOCKER}"  ${DOCKERFLAGS} run ${DOCKERRUNFLAGS}
+set -- "$@" "${DOCKER}" ${DOCKERFLAGS} run ${DOCKERRUNFLAGS}
 set -- "$@" -v "${PWD}:${MULLE_DOCKERIZE_MOUNT_POINT}"
 for arg in ${MULLE_DOCKERIZE_VOLUMES}
 do

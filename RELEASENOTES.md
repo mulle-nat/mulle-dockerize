@@ -1,3 +1,8 @@
+### 0.3.1
+
+* use latest jekyll, update gemfile
+* add --rebuild-docker-image flag
+
 ## 0.3.0
 
 * fixed dockerize for two level symlink
