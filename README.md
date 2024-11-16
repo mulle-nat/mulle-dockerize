@@ -1,3 +1,7 @@
+---
+This is outdated. Just use [distrobox](https://distrobox.it) instead.
+---
+
 # mulle-dockerize
 
 #### 🔌 Collection of Dockerized Commands
